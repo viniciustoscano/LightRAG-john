@@ -390,9 +390,11 @@ export default function SanitizeData() {
       return;
     }
 
+    console.log('Showing orphans'); // Debug
     const orphans = entities.filter((name) => entityOrphanMap[name] === true).sort((a, b) =>
       a.toLowerCase().localeCompare(b.toLowerCase())
     );
+    console.log('Orphan count:', orphans.length); // Debug
 
     setOrphanFilteredEntities(orphans);
     setFilterMode('orphan');
@@ -490,7 +492,11 @@ export default function SanitizeData() {
         allow_merge: allowMerge,
       };
 
+      console.log('Sending edit payload:', JSON.stringify(payload, null, 2));  // Debug
+
       const response = await axios.post(`${API_BASE}/graph/entity/edit`, payload);
+
+      console.log('Edit response:', response.data);  // Debug
 
       if (response.status === 200) {
         setEditEntityModalOpen(false);
@@ -650,7 +656,11 @@ export default function SanitizeData() {
         relation_data: relationData,
       };
 
+      console.log('Create rel payload:', JSON.stringify(payload, null, 2));  // Debug
+
       const response = await axios.post(`${API_BASE}/graph/relation/create`, payload);
+
+      console.log('Create rel response:', response.data);  // Debug
 
       if (response.status === 200) {
         setCreateRelModalOpen(false);
@@ -708,7 +718,11 @@ export default function SanitizeData() {
         entity_to_change_into: targetEntity,
       };
 
+      console.log('Merge payload:', JSON.stringify(payload, null, 2));  // Debug
+
       const response = await axios.post(`${API_BASE}/graph/entities/merge`, payload);
+
+      console.log('Merge response:', response.data);  // Debug
 
       if (response.status === 200) {
         // Full refresh after merge
@@ -779,10 +793,13 @@ export default function SanitizeData() {
     setLoadingDetails((prev) => [...prev, entityName]);
 
     try {
+      console.log("Making axios request...");
       const encodedName = encodeURIComponent(entityName);
       const url = `${API_BASE}/graphs?label=${encodedName}&max_depth=1&max_nodes=20000`;
+      console.log("Request URL:", url);
 
-      const response = await axios.get(url);
+    const response = await axios.get(url);
+    console.log("Response received:", response.status, response.data);
 
       const data = response.data;
 
