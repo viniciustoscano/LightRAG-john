@@ -1,10 +1,6 @@
 // src/pages/SanitizeData.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
-import { backendBaseUrl } from '@/lib/constants';
-
-// Use the same backend URL as the rest of the application
-const API_BASE = backendBaseUrl;
+import { axiosInstance } from '@/api/lightrag';
 
 export default function SanitizeData() {
   const [entities, setEntities] = useState<string[]>([]);
@@ -102,8 +98,8 @@ export default function SanitizeData() {
       await Promise.all(
         entityList.map(async (name: string) => {
           try {
-            const detailRes = await axios.get(
-              `${API_BASE}/graphs?label=${encodeURIComponent(name)}&max_depth=1&max_nodes=2`
+            const detailRes = await axiosInstance.get(
+              `/graphs?label=${encodeURIComponent(name)}&max_depth=1&max_nodes=2`
             );
             // Find main node by id (robust to order)
             const mainNode = detailRes.data.nodes?.find((node: any) => node.id === name);
@@ -134,7 +130,7 @@ export default function SanitizeData() {
     setLoadingTypes(true);
     try {
       // 1. Get all entity names
-      const listRes = await axios.get(`${API_BASE}/graph/label/list`);
+      const listRes = await axiosInstance.get(`/graph/label/list`);
       const entityNames = listRes.data as string[];
 
       // 2. Fetch types for each name (in parallel)
@@ -144,8 +140,8 @@ export default function SanitizeData() {
       await Promise.all(
         entityNames.map(async (name) => {
           try {
-            const detailRes = await axios.get(
-              `${API_BASE}/graphs?label=${encodeURIComponent(name)}&max_depth=1&max_nodes=1`
+            const detailRes = await axiosInstance.get(
+              `/graphs?label=${encodeURIComponent(name)}&max_depth=1&max_nodes=1`
             );
             const type = detailRes.data.nodes?.[0]?.properties?.entity_type;
             if (type) typeSet.add(type);
@@ -173,7 +169,7 @@ export default function SanitizeData() {
   useEffect(() => {
     const fetchEntities = async () => {
       try {
-        const response = await axios.get(`${API_BASE}/graph/label/list`);
+        const response = await axiosInstance.get(`/graph/label/list`);
         const sorted = (response.data as string[]).sort((a, b) =>
           a.toLowerCase().localeCompare(b.toLowerCase())
         );
@@ -424,7 +420,7 @@ export default function SanitizeData() {
         entityData.source_id = createEntitySourceId;
       }
 
-      const response = await axios.post(`${API_BASE}/graph/entity/create`, {
+      const response = await axiosInstance.post(`/graph/entity/create`, {
         entity_name: createEntityName,
         entity_data: entityData,
       });
@@ -433,7 +429,7 @@ export default function SanitizeData() {
         // Success: Close modal, refresh entities
         setCreateEntityModalOpen(false);
         // Refresh entity list (re-fetch)
-        const listRes = await axios.get(`${API_BASE}/graph/label/list`);
+        const listRes = await axiosInstance.get(`/graph/label/list`);
         const sorted = (listRes.data as string[]).sort((a, b) =>
           a.toLowerCase().localeCompare(b.toLowerCase())
         );
@@ -494,7 +490,7 @@ export default function SanitizeData() {
 
       console.log('Sending edit payload:', JSON.stringify(payload, null, 2));  // Debug
 
-      const response = await axios.post(`${API_BASE}/graph/entity/edit`, payload);
+      const response = await axiosInstance.post(`/graph/entity/edit`, payload);
 
       console.log('Edit response:', response.data);  // Debug
 
@@ -526,7 +522,7 @@ export default function SanitizeData() {
         }
 
         // Full refresh
-        const listRes = await axios.get(`${API_BASE}/graph/label/list`);
+        const listRes = await axiosInstance.get(`/graph/label/list`);
         const sorted = (listRes.data as string[]).sort((a, b) =>
           a.toLowerCase().localeCompare(b.toLowerCase())
         );
@@ -584,7 +580,7 @@ export default function SanitizeData() {
       for (const entityName of selectedEntities) {
         try {
           const payload = { entity_name: entityName };
-          const response = await axios.delete(`${API_BASE}/documents/delete_entity`, { data: payload });
+          const response = await axiosInstance.delete(`/documents/delete_entity`, { data: payload });
 
           if (response.status === 200) {
             successCount++;
@@ -604,7 +600,7 @@ export default function SanitizeData() {
       }
 
       // Full refresh after deletes
-      const listRes = await axios.get(`${API_BASE}/graph/label/list`);
+      const listRes = await axiosInstance.get(`/graph/label/list`);
       const sorted = (listRes.data as string[]).sort((a, b) =>
         a.toLowerCase().localeCompare(b.toLowerCase())
       );
@@ -658,7 +654,7 @@ export default function SanitizeData() {
 
       console.log('Create rel payload:', JSON.stringify(payload, null, 2));  // Debug
 
-      const response = await axios.post(`${API_BASE}/graph/relation/create`, payload);
+      const response = await axiosInstance.post(`/graph/relation/create`, payload);
 
       console.log('Create rel response:', response.data);  // Debug
 
@@ -670,7 +666,7 @@ export default function SanitizeData() {
         fetchEntityDetail(targetEntity, true);
 
         // Optional: Full refresh if needed (e.g., for orphans if relations change)
-        // const listRes = await axios.get(`${API_BASE}/graph/label/list`);
+        // const listRes = await axiosInstance.get(`/graph/label/list`);
         // const sorted = (listRes.data as string[]).sort(...);
         // setEntities(sorted);
         // fetchEntityDetails(sorted);
@@ -720,13 +716,13 @@ export default function SanitizeData() {
 
       console.log('Merge payload:', JSON.stringify(payload, null, 2));  // Debug
 
-      const response = await axios.post(`${API_BASE}/graph/entities/merge`, payload);
+      const response = await axiosInstance.post(`/graph/entities/merge`, payload);
 
       console.log('Merge response:', response.data);  // Debug
 
       if (response.status === 200) {
         // Full refresh after merge
-        const listRes = await axios.get(`${API_BASE}/graph/label/list`);
+        const listRes = await axiosInstance.get(`/graph/label/list`);
         const sorted = (listRes.data as string[]).sort((a, b) =>
           a.toLowerCase().localeCompare(b.toLowerCase())
         );
@@ -761,8 +757,8 @@ export default function SanitizeData() {
 
   const fetchSingleEntityDetails = async (name: string) => {
     try {
-      const detailRes = await axios.get(
-        `${API_BASE}/graphs?label=${encodeURIComponent(name)}&max_depth=1&max_nodes=2`
+      const detailRes = await axiosInstance.get(
+        `/graphs?label=${encodeURIComponent(name)}&max_depth=1&max_nodes=2`
       );
       // Find main node by id (robust to order)
       const mainNode = detailRes.data.nodes?.find((node: any) => node.id === name);
@@ -795,10 +791,10 @@ export default function SanitizeData() {
     try {
       console.log("Making axios request...");
       const encodedName = encodeURIComponent(entityName);
-      const url = `${API_BASE}/graphs?label=${encodedName}&max_depth=1&max_nodes=20000`;
+      const url = `/graphs?label=${encodedName}&max_depth=1&max_nodes=20000`;
       console.log("Request URL:", url);
 
-    const response = await axios.get(url);
+    const response = await axiosInstance.get(url);
     console.log("Response received:", response.status, response.data);
 
       const data = response.data;
@@ -888,7 +884,7 @@ export default function SanitizeData() {
 
   const triggerGraphRefresh = async () => {
   try {
-    const response = await axios.post(`${API_BASE}/graph/refresh-data`);
+    const response = await axiosInstance.post(`/graph/refresh-data`);
     if (response.status === 200) {
       // console.log("Graph data refresh triggered successfully");
       // Optional: show toast/alert later
@@ -928,7 +924,7 @@ export default function SanitizeData() {
             },
           };
 
-          const res = await axios.post(`${API_BASE}/graph/relation/edit`, payload);
+          const res = await axiosInstance.post(`/graph/relation/edit`, payload);
           if (res.status === 200) successCount++;
         }
       }
@@ -960,7 +956,7 @@ export default function SanitizeData() {
 
     try {
       // Change to DELETE method + correct parameter names
-      await axios.delete(`${API_BASE}/documents/delete_relation`, {
+      await axiosInstance.delete(`/documents/delete_relation`, {
         data: {  // Use 'data' for body in DELETE (axios requires this for non-GET methods)
           source_entity: from,
           target_entity: to,
