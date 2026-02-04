@@ -494,11 +494,18 @@ class MemgraphStorage(BaseGraphStorage):
                 "Memgraph driver is not initialized. Call 'await initialize()' first."
             )
         properties = node_data
-        entity_type = properties["entity_type"]
+
+        # Validate required fields before accessing them
         if "entity_id" not in properties:
             raise ValueError(
                 "Memgraph: node properties must contain an 'entity_id' field"
             )
+        if "entity_type" not in properties:
+            raise ValueError(
+                "Memgraph: node properties must contain an 'entity_type' field"
+            )
+
+        entity_type = properties["entity_type"]
 
         # Manual transaction-level retry following official Memgraph documentation
         max_retries = 100

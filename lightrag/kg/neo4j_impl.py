@@ -1018,9 +1018,14 @@ class Neo4JStorage(BaseGraphStorage):
         """
         workspace_label = self._get_workspace_label()
         properties = node_data
-        entity_type = properties["entity_type"]
+
+        # Validate required fields before accessing them
         if "entity_id" not in properties:
             raise ValueError("Neo4j: node properties must contain an 'entity_id' field")
+        if "entity_type" not in properties:
+            raise ValueError("Neo4j: node properties must contain an 'entity_type' field")
+
+        entity_type = properties["entity_type"]
 
         try:
             async with self._driver.session(database=self._DATABASE) as session:
