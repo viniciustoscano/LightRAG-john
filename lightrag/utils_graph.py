@@ -1352,7 +1352,7 @@ async def _merge_entities_impl(
             }
 
     # Apply relationship updates
-    logger.info(f"Entity Merge: updatign {len(relation_updates)} relations")
+    logger.info(f"Entity Merge: updating {len(relation_updates)} relations")
     for rel_data in relation_updates.values():
         await chunk_entity_relation_graph.upsert_edge(
             rel_data["graph_src"], rel_data["graph_tgt"], rel_data["data"]
