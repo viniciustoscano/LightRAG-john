@@ -1,8 +1,10 @@
 // src/pages/SanitizeData.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { backendBaseUrl } from '@/lib/constants';
 
-const API_BASE = 'http://localhost:9621';
+// Use the same backend URL as the rest of the application
+const API_BASE = backendBaseUrl;
 
 export default function SanitizeData() {
   const [entities, setEntities] = useState<string[]>([]);
