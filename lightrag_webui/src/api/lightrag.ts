@@ -279,7 +279,7 @@ export const InvalidApiKeyError = 'Invalid API Key'
 export const RequireApiKeError = 'API Key required'
 
 // Axios instance
-const axiosInstance = axios.create({
+export const axiosInstance = axios.create({
   baseURL: backendBaseUrl,
   headers: {
     'Content-Type': 'application/json'
